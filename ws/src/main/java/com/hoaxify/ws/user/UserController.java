@@ -1,5 +1,6 @@
 package com.hoaxify.ws.user;
 
+import com.hoaxify.ws.shared.GenericMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +13,8 @@ public class UserController {
     @Autowired
     UserService userService;
     @PostMapping("/api/v1/users")
-    void createUser (@RequestBody User user) {
+    GenericMessage createUser (@RequestBody User user) {
         userService.save(user);
+        return new GenericMessage("User is saved");
     }
 }

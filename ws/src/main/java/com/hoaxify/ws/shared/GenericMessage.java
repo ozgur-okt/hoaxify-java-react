@@ -1,4 +1,5 @@
 package com.hoaxify.ws.shared;
 
-public class GenericMessage {
+public record GenericMessage(String message) {
+
 }
