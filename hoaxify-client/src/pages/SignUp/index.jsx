@@ -1,5 +1,5 @@
 import axios from "axios"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { signUp } from "./api"
 
 function SignUp() {
@@ -9,22 +9,12 @@ function SignUp() {
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [apiProgress, setApiProgress] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [errors, setErrors] = useState({})
+  const [generalError, setGeneralError] = useState('')
 
-  const onChangeUsername = (e) => {
-    setUsername(e.target.value)
-  }
-
-  const onChangeEmail = (e) => {
-    setEmail(e.target.value)
-  }
-
-  const onChangePassword = (e) => {
-    setPassword(e.target.value)
-  }
-
-  const onChangePasswordConfirm = (e) => {
-    setPasswordConfirm(e.target.value)
-  }
+  useEffect(() => {
+    setErrors({})
+  }, [username, email])
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -33,8 +23,12 @@ function SignUp() {
     try {
       const response = await signUp({ username, email, password })
       setSuccessMessage(response.data.message)
-    } catch {
-
+    } catch (error) {
+      if (error.response?.data.validationErrors && error.response.data.status === 400) {
+        setErrors(error.response.data.validationErrors)
+      }else {
+        setGeneralError('There is an unexpected error')
+      }
     } finally {
       setApiProgress(false)
       setUsername('')
@@ -54,22 +48,25 @@ function SignUp() {
           <div className="card-body">
             <div className="mb-3">
               <label className="form-label" htmlFor="username">Username</label>
-              <input className="form-control" type="text" id="username" value={username} onChange={onChangeUsername} />
+              <input className={`form-control ${errors.username && 'is-invalid'}`} type="text" id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <div className="invalid-feedback">{errors.username}</div>
             </div>
             <div className="mb-3">
               <label className="form-label" htmlFor="email">Email</label>
-              <input className="form-control" type="email" id="email" value={email} onChange={onChangeEmail} />
+              <input className={`form-control ${errors.email && 'is-invalid'}`} type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div className="invalid-feedback">{errors.email}</div>
             </div>
             <div className="mb-3">
               <label className="form-label" htmlFor="password">Password</label>
-              <input className="form-control" type="password" id="password" value={password} onChange={onChangePassword} />
+              <input className="form-control" type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="mb-3">
               <label className="form-label" htmlFor="passwordConfirm">Confirm Password</label>
-              <input className="form-control" type="password" id="passwordConfirm" value={passwordConfirm} onChange={onChangePasswordConfirm} />
+              <input className="form-control" type="password" id="passwordConfirm" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
             </div>
             <div className="text-center">
               {successMessage && <div className="alert alert-success">{successMessage}</div>}
+              {generalError && <div className="alert alert-danger">{generalError}</div>}
             </div>
             <div className="text-center">
               {apiProgress
