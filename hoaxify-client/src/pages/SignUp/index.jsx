@@ -1,8 +1,11 @@
-import axios from "axios"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { signUp } from "./api"
+import Input from "./components/Input"
+import { useTranslation } from "react-i18next"
+import LanguageSelector from "../../shared/components/LanguageSelector"
 
 function SignUp() {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -13,8 +16,16 @@ function SignUp() {
   const [generalError, setGeneralError] = useState('')
 
   useEffect(() => {
-    setErrors({})
-  }, [username, email])
+    setErrors({ ...errors, username: undefined })
+  }, [username])
+
+  useEffect(() => {
+    setErrors({ ...errors, email: undefined })
+  }, [email])
+
+  useEffect(() => {
+    setErrors({ ...errors, password: undefined })
+  }, [password])
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -24,46 +35,39 @@ function SignUp() {
       const response = await signUp({ username, email, password })
       setSuccessMessage(response.data.message)
     } catch (error) {
-      if (error.response?.data.validationErrors && error.response.data.status === 400) {
+      if (error.response?.data && error.response.data.status === 400) {
         setErrors(error.response.data.validationErrors)
-      }else {
-        setGeneralError('There is an unexpected error')
+      } else if (error.response?.data && error.response.data.status === 502) {
+        setGeneralError(error.response.data.message)
+      }
+       else {
+        setGeneralError(t('genericError'))
       }
     } finally {
       setApiProgress(false)
-      setUsername('')
-      setEmail('')
-      setPassword('')
-      setPasswordConfirm('')
+
     }
   }
+
+  const passwordMismatchError = useMemo(() => {
+    if (password !== passwordConfirm) {
+      return t('passwordMismatch')
+    }
+    return null
+  }, [password, passwordConfirm])
 
   return (
     <div className="container">
       <div className="col-lg-6 offset-lg-3 col-sm-8 offset-sm-2">
         <form className="card" onSubmit={onSubmit}>
           <div className="text-center card-header">
-            <h1>SignUp</h1>
+            <h1>{t('signUp')}</h1>
           </div>
           <div className="card-body">
-            <div className="mb-3">
-              <label className="form-label" htmlFor="username">Username</label>
-              <input className={`form-control ${errors.username && 'is-invalid'}`} type="text" id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
-              <div className="invalid-feedback">{errors.username}</div>
-            </div>
-            <div className="mb-3">
-              <label className="form-label" htmlFor="email">Email</label>
-              <input className={`form-control ${errors.email && 'is-invalid'}`} type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <div className="invalid-feedback">{errors.email}</div>
-            </div>
-            <div className="mb-3">
-              <label className="form-label" htmlFor="password">Password</label>
-              <input className="form-control" type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <div className="mb-3">
-              <label className="form-label" htmlFor="passwordConfirm">Confirm Password</label>
-              <input className="form-control" type="password" id="passwordConfirm" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
-            </div>
+            <Input label={t('username')} error={errors.username} onChange={(e) => setUsername(e.target.value)} id="username" />
+            <Input label={t('email')} error={errors.email} onChange={(e) => setEmail(e.target.value)} id="email" />
+            <Input label={t('password')} error={errors.password} onChange={(e) => setPassword(e.target.value)} id="password" type="password" />
+            <Input label={t('passwordConfirm')} error={passwordMismatchError} onChange={(e) => setPasswordConfirm(e.target.value)} id="passwordConfirm" type="password" />
             <div className="text-center">
               {successMessage && <div className="alert alert-success">{successMessage}</div>}
               {generalError && <div className="alert alert-danger">{generalError}</div>}
@@ -74,12 +78,13 @@ function SignUp() {
                 <div className="spinner-border text-primary" role="status"> </div>
                 :
                 <button className="btn btn-primary" disabled={!password || password !== passwordConfirm}>
-                  Sign Up
+                  {t('signUp')}
                 </button>
               }
             </div>
           </div>
         </form>
+        <LanguageSelector />
       </div>
     </div>
   )
