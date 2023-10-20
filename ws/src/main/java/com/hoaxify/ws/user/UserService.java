@@ -2,6 +2,7 @@ package com.hoaxify.ws.user;
 
 import com.hoaxify.ws.email.EmailService;
 import com.hoaxify.ws.user.exception.ActivationNotificationException;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,6 +37,8 @@ public class UserService {
             throw new RuntimeException("Unexpexted error");
         }catch (MailException ex){
             throw new ActivationNotificationException();
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
         }
 
     }
